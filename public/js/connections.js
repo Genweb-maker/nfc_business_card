@@ -175,11 +175,22 @@ class ConnectionsManager {
 
     // Format location for display
     formatLocation(location) {
+        if (!location) return 'Unknown location';
+        
+        // If we have a readable address, use it
         if (location.address) {
-            return location.address;
-        } else if (location.latitude && location.longitude) {
-            return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+            const accuracy = location.accuracy ? ` (±${Math.round(location.accuracy)}m)` : '';
+            const source = location.source === 'ip' ? ' (IP-based)' : '';
+            return `${location.address}${accuracy}${source}`;
+        } 
+        
+        // Fallback to coordinates
+        if (location.latitude && location.longitude) {
+            const accuracy = location.accuracy ? ` (±${Math.round(location.accuracy)}m)` : '';
+            const source = location.source === 'ip' ? ' (IP-based)' : '';
+            return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}${accuracy}${source}`;
         }
+        
         return 'Unknown location';
     }
 
@@ -573,6 +584,101 @@ class ConnectionsManager {
 
         return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     }
+
+    // Check location permission status
+    async checkLocationStatus() {
+        if (!utils.isLocationSupported()) {
+            return { 
+                supported: false, 
+                permission: 'unsupported',
+                message: 'Location services not supported by this browser'
+            };
+        }
+
+        let permission = 'unknown';
+        let message = 'Location permission not determined';
+
+        try {
+            if (navigator.permissions) {
+                const result = await navigator.permissions.query({name: 'geolocation'});
+                permission = result.state;
+                
+                switch(result.state) {
+                    case 'granted':
+                        message = 'Location access granted';
+                        break;
+                    case 'denied':
+                        message = 'Location access denied';
+                        break;
+                    case 'prompt':
+                        message = 'Location permission will be requested';
+                        break;
+                }
+            }
+        } catch (error) {
+            console.warn('Permission API not supported:', error);
+        }
+
+        return {
+            supported: true,
+            permission: permission,
+            message: message,
+            cached: utils.getCachedLocation() !== null
+        };
+    }
+
+    // Show location status in UI
+    async showLocationStatus() {
+        const status = await this.checkLocationStatus();
+        const statusText = status.cached ? 
+            `${status.message} (Cached location available)` : 
+            status.message;
+            
+        utils.showToast(statusText, 
+            status.permission === 'granted' ? 'success' : 
+            status.permission === 'denied' ? 'error' : 'info'
+        );
+        
+        return status;
+    }
+
+    // Request location permission with user-friendly prompts
+    async requestLocationAccess() {
+        try {
+            const status = await this.checkLocationStatus();
+            
+            if (!status.supported) {
+                utils.showToast('Location services not supported', 'error');
+                return false;
+            }
+            
+            if (status.permission === 'denied') {
+                utils.showToast('Location access denied. Please enable in browser settings.', 'warning');
+                return false;
+            }
+            
+            // Request location access
+            const location = await utils.requestLocationPermission();
+            utils.showToast('Location services enabled!', 'success');
+            return location;
+            
+        } catch (error) {
+            console.error('Location access request failed:', error);
+            utils.showToast('Failed to access location services', 'error');
+            return false;
+        }
+    }
+
+    // Clear cached location
+    clearCachedLocation() {
+        try {
+            localStorage.removeItem('cachedLocation');
+            utils.showToast('Cached location cleared', 'success');
+        } catch (error) {
+            console.error('Failed to clear cached location:', error);
+            utils.showToast('Failed to clear cached location', 'error');
+        }
+    }
 }
 
 // Initialize connections manager
@@ -638,8 +744,64 @@ document.addEventListener('DOMContentLoaded', () => {
             font-size: 0.875rem;
             color: #6b7280;
         }
+        
+        .location-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .location-controls .btn-small {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            white-space: nowrap;
+        }
     `;
     document.head.appendChild(style);
+});
+
+// Add location service controls to UI
+document.addEventListener('DOMContentLoaded', () => {
+    // Add location status indicator to connections page
+    const connectionsHeader = document.querySelector('.connections-header');
+    if (connectionsHeader) {
+        const locationControls = document.createElement('div');
+        locationControls.className = 'location-controls';
+        locationControls.innerHTML = `
+            <button class="btn-secondary btn-small location-status-btn" title="Check location status">
+                📍 Location
+            </button>
+            <button class="btn-secondary btn-small location-request-btn" title="Request location access">
+                🔓 Enable
+            </button>
+            <button class="btn-secondary btn-small location-clear-btn" title="Clear cached location">
+                🗑️ Clear Cache
+            </button>
+        `;
+        
+        // Insert before existing controls if any, otherwise append
+        const existingControls = connectionsHeader.querySelector('.header-controls');
+        if (existingControls) {
+            connectionsHeader.insertBefore(locationControls, existingControls);
+        } else {
+            connectionsHeader.appendChild(locationControls);
+        }
+        
+        // Add event listeners
+        locationControls.querySelector('.location-status-btn').addEventListener('click', () => {
+            connectionsManager.showLocationStatus();
+        });
+        
+        locationControls.querySelector('.location-request-btn').addEventListener('click', () => {
+            connectionsManager.requestLocationAccess();
+        });
+        
+        locationControls.querySelector('.location-clear-btn').addEventListener('click', () => {
+            connectionsManager.clearCachedLocation();
+        });
+    }
 });
 
 // Export connections manager for use in other modules

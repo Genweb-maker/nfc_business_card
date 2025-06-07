@@ -87,8 +87,8 @@ function hideLoading() {
     }
 }
 
-// Get current user location
-function getCurrentLocation() {
+// Get current user location with enhanced features
+async function getCurrentLocation() {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
             reject(new Error('Geolocation is not supported by this browser'));
@@ -96,24 +96,238 @@ function getCurrentLocation() {
         }
         
         navigator.geolocation.getCurrentPosition(
-            (position) => {
-                resolve({
+            async (position) => {
+                const locationData = {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy
-                });
+                    accuracy: position.coords.accuracy,
+                    timestamp: position.timestamp
+                };
+                
+                // Try to get address using reverse geocoding
+                try {
+                    const address = await reverseGeocode(
+                        position.coords.latitude, 
+                        position.coords.longitude
+                    );
+                    locationData.address = address;
+                } catch (error) {
+                    console.warn('Reverse geocoding failed:', error);
+                    // Continue without address
+                }
+                
+                resolve(locationData);
             },
             (error) => {
                 console.error('Geolocation error:', error);
-                reject(error);
+                let errorMessage = 'Unable to get location';
+                
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Location access denied by user';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Location information unavailable';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Location request timed out';
+                        break;
+                }
+                
+                reject(new Error(errorMessage));
             },
             {
                 enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000
+                timeout: 15000,
+                maximumAge: 300000 // 5 minutes
             }
         );
     });
+}
+
+// Reverse geocoding to get address from coordinates
+async function reverseGeocode(latitude, longitude) {
+    try {
+        // Using OpenStreetMap Nominatim API (free, no API key required)
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+                headers: {
+                    'User-Agent': 'NFC-Business-Card-App'
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.display_name) {
+            // Extract meaningful address components
+            const address = data.address || {};
+            const addressParts = [];
+            
+            // Add building/house number and road
+            if (address.house_number && address.road) {
+                addressParts.push(`${address.house_number} ${address.road}`);
+            } else if (address.road) {
+                addressParts.push(address.road);
+            }
+            
+            // Add city/town/village
+            const city = address.city || address.town || address.village || address.municipality;
+            if (city) {
+                addressParts.push(city);
+            }
+            
+            // Add state/province
+            if (address.state) {
+                addressParts.push(address.state);
+            }
+            
+            // Add country
+            if (address.country) {
+                addressParts.push(address.country);
+            }
+            
+            return addressParts.length > 0 ? addressParts.join(', ') : data.display_name;
+        }
+        
+        throw new Error('No address found');
+        
+    } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        throw error;
+    }
+}
+
+// Get location with user permission prompt
+async function requestLocationPermission() {
+    try {
+        // Check if already granted
+        if (navigator.permissions) {
+            const permission = await navigator.permissions.query({name: 'geolocation'});
+            if (permission.state === 'granted') {
+                return await getCurrentLocation();
+            }
+        }
+        
+        // Request location - this will trigger permission prompt
+        const location = await getCurrentLocation();
+        showToast('Location access granted', 'success');
+        return location;
+        
+    } catch (error) {
+        console.error('Location permission error:', error);
+        showToast('Location access required for enhanced features', 'warning');
+        throw error;
+    }
+}
+
+// Check if location services are available
+function isLocationSupported() {
+    return navigator.geolocation !== undefined;
+}
+
+// Get cached location if available and not too old
+function getCachedLocation(maxAge = 300000) { // 5 minutes default
+    const cached = localStorage.getItem('cachedLocation');
+    if (cached) {
+        try {
+            const locationData = JSON.parse(cached);
+            const age = Date.now() - locationData.timestamp;
+            if (age < maxAge) {
+                return locationData;
+            }
+        } catch (error) {
+            console.error('Error parsing cached location:', error);
+        }
+    }
+    return null;
+}
+
+// Cache location data
+function cacheLocation(locationData) {
+    try {
+        const cacheData = {
+            ...locationData,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('cachedLocation', JSON.stringify(cacheData));
+    } catch (error) {
+        console.error('Error caching location:', error);
+    }
+}
+
+// Enhanced location getter with caching and fallback
+async function getLocationEnhanced(options = {}) {
+    const {
+        useCache = true,
+        maxCacheAge = 300000, // 5 minutes
+        fallbackToIP = false
+    } = options;
+    
+    try {
+        // Try cached location first
+        if (useCache) {
+            const cached = getCachedLocation(maxCacheAge);
+            if (cached) {
+                console.log('Using cached location');
+                return cached;
+            }
+        }
+        
+        // Get fresh location
+        const location = await getCurrentLocation();
+        
+        // Cache the location
+        if (useCache) {
+            cacheLocation(location);
+        }
+        
+        return location;
+        
+    } catch (error) {
+        console.error('Enhanced location error:', error);
+        
+        // Fallback to IP-based location if enabled
+        if (fallbackToIP) {
+            try {
+                return await getLocationFromIP();
+            } catch (ipError) {
+                console.error('IP location fallback failed:', ipError);
+            }
+        }
+        
+        throw error;
+    }
+}
+
+// Get approximate location from IP address
+async function getLocationFromIP() {
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        if (data.latitude && data.longitude) {
+            return {
+                latitude: data.latitude,
+                longitude: data.longitude,
+                accuracy: 10000, // IP location is less accurate
+                address: `${data.city}, ${data.region}, ${data.country_name}`,
+                source: 'ip',
+                timestamp: Date.now()
+            };
+        }
+        
+        throw new Error('No location data from IP service');
+        
+    } catch (error) {
+        console.error('IP location error:', error);
+        throw error;
+    }
 }
 
 // Get device information
@@ -383,6 +597,13 @@ window.utils = {
     showLoading,
     hideLoading,
     getCurrentLocation,
+    reverseGeocode,
+    requestLocationPermission,
+    isLocationSupported,
+    getCachedLocation,
+    cacheLocation,
+    getLocationEnhanced,
+    getLocationFromIP,
     getDeviceInfo,
     formatDate,
     formatTimeAgo,

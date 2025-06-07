@@ -226,13 +226,19 @@ class NFCManager {
     // Process received profile data
     async processReceivedProfile(profileData, shareMethod) {
         try {
-            // Get current location
+            // Get current location with enhanced features
             let location = {};
             try {
-                const position = await utils.getCurrentLocation();
+                const position = await utils.getLocationEnhanced({
+                    useCache: true,
+                    maxCacheAge: 300000, // 5 minutes
+                    fallbackToIP: true
+                });
                 location = position;
+                console.log('Location obtained:', location);
             } catch (error) {
                 console.warn('Could not get location:', error);
+                utils.showToast('Location not available', 'warning');
             }
 
             // Get device info
