@@ -105,6 +105,9 @@ class ConnectionsManager {
 
         // Add animations
         this.animateCards(container);
+        
+        // Attach event listeners to buttons
+        this.attachEventListeners(container);
     }
 
     // Create connection card element
@@ -152,14 +155,14 @@ class ConnectionsManager {
             <div class="connection-meta">
                 <div>Connected ${date}</div>
                 <div class="connection-actions">
-                    <button class="btn-secondary btn-small" onclick="connectionsManager.viewConnection('${connection._id}')">
+                    <button class="btn-secondary btn-small view-details-btn" data-connection-id="${connection._id}">
                         View Details
                     </button>
                     ${this.currentTab === 'received' ? `
-                        <button class="btn-secondary btn-small" onclick="connectionsManager.exportContact('${connection._id}')">
+                        <button class="btn-secondary btn-small export-contact-btn" data-connection-id="${connection._id}">
                             Export
                         </button>
-                        <button class="btn-secondary btn-small text-red" onclick="connectionsManager.deleteConnection('${connection._id}')">
+                        <button class="btn-secondary btn-small text-red delete-connection-btn" data-connection-id="${connection._id}">
                             Delete
                         </button>
                     ` : ''}
@@ -196,12 +199,15 @@ class ConnectionsManager {
                 <h3>${emptyMessage}</h3>
                 <p>${actionMessage}</p>
                 ${this.currentTab === 'received' ? `
-                    <button class="btn-primary" onclick="window.app?.navigateTo('share')">
+                    <button class="btn-primary start-sharing-btn">
                         Start Sharing
                     </button>
                 ` : ''}
             </div>
         `;
+        
+        // Attach event listeners to buttons
+        this.attachEventListeners(container);
     }
 
     // Show loading state
@@ -227,11 +233,14 @@ class ConnectionsManager {
                 <div class="error-icon">❌</div>
                 <h3>Failed to load connections</h3>
                 <p>${message}</p>
-                <button class="btn-primary" onclick="connectionsManager.loadConnections()">
+                <button class="btn-primary retry-load-btn">
                     Try Again
                 </button>
             </div>
         `;
+        
+        // Attach event listeners to buttons
+        this.attachEventListeners(container);
     }
 
     // Animate cards on render
@@ -240,6 +249,54 @@ class ConnectionsManager {
         cards.forEach((card, index) => {
             card.style.animationDelay = `${index * 0.1}s`;
         });
+    }
+
+    // Attach event listeners to dynamically created buttons
+    attachEventListeners(container) {
+        // View details buttons
+        const viewDetailsButtons = container.querySelectorAll('.view-details-btn');
+        viewDetailsButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const connectionId = e.target.getAttribute('data-connection-id');
+                this.viewConnection(connectionId);
+            });
+        });
+
+        // Export contact buttons
+        const exportButtons = container.querySelectorAll('.export-contact-btn');
+        exportButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const connectionId = e.target.getAttribute('data-connection-id');
+                this.exportContact(connectionId);
+            });
+        });
+
+        // Delete connection buttons
+        const deleteButtons = container.querySelectorAll('.delete-connection-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const connectionId = e.target.getAttribute('data-connection-id');
+                this.deleteConnection(connectionId);
+            });
+        });
+
+        // Retry load button
+        const retryButton = container.querySelector('.retry-load-btn');
+        if (retryButton) {
+            retryButton.addEventListener('click', () => {
+                this.loadConnections();
+            });
+        }
+
+        // Start sharing button
+        const startSharingButton = container.querySelector('.start-sharing-btn');
+        if (startSharingButton) {
+            startSharingButton.addEventListener('click', () => {
+                if (window.app?.navigateTo) {
+                    window.app.navigateTo('share');
+                }
+            });
+        }
     }
 
     // View connection details
