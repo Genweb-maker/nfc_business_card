@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Business Card</title>
+    <meta name="description" content="Share your business card digitally with NFC and QR codes">
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+</head>
+
+<body>
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-icon">📱</span>
+                <span class="brand-text">NFC Card</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
+                <a href="#" class="nav-link" data-page="profile">Profile</a>
+                <a href="#" class="nav-link" data-page="share">Share</a>
+                <a href="#" class="nav-link" data-page="connections">Connections</a>
+                <button class="btn-secondary" id="logoutBtn">Logout</button>
+            </div>
+            <button class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="app">
+        <!-- Authentication Page -->
+        <div id="authPage" class="page active">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <h1>Welcome to NFC Business Card</h1>
+                        <p>Share your professional information seamlessly</p>
+                    </div>
+
+                    <div class="auth-tabs">
+                        <button class="tab-btn active" data-tab="login">Login</button>
+                        <button class="tab-btn" data-tab="register">Register</button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="loginForm" class="auth-form active">
+                        <div class="form-group">
+                            <label for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Login</button>
+                    </form>
+
+                    <!-- Register Form -->
+                    <form id="registerForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="registerEmail">Email</label>
+                            <input type="email" id="registerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">Password</label>
+                            <input type="password" id="registerPassword" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerConfirmPassword">Confirm Password</label>
+                            <input type="password" id="registerConfirmPassword" required minlength="6">
+                        </div>
+                        <button type="submit" class="btn-primary">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboardPage" class="page">
+            <div class="container">
+                <div class="dashboard-header">
+                    <h1>Dashboard</h1>
+                    <p>Welcome back! Here's your activity overview.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📤</div>
+                        <div class="stat-info">
+                            <h3 id="sentCount">0</h3>
+                            <p>Profiles Shared</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📥</div>
+                        <div class="stat-info">
+                            <h3 id="receivedCount">0</h3>
+                            <p>Profiles Received</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-info">
+                            <h3 id="nfcCount">0</h3>
+                            <p>NFC Shares</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3 id="qrCount">0</h3>
+                            <p>QR Shares</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="action-grid">
+                        <button class="action-card" data-page="profile">
+                            <div class="action-icon">👤</div>
+                            <h3>Edit Profile</h3>
+                            <p>Update your business information</p>
+                        </button>
+                        <button class="action-card" data-page="share">
+                            <div class="action-icon">🔗</div>
+                            <h3>Share Profile</h3>
+                            <p>Share via NFC or QR code</p>
+                        </button>
+                        <button class="action-card" data-page="connections">
+                            <div class="action-icon">👥</div>
+                            <h3>View Connections</h3>
+                            <p>See your networking history</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profilePage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>My Profile</h1>
+                    <p>Manage your business card information</p>
+                </div>
+
+                <div class="profile-container">
+                    <form id="profileForm" class="profile-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fullName">Full Name *</label>
+                                <input type="text" id="fullName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email *</label>
+                                <input type="email" id="email" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="phoneNumber">Phone Number</label>
+                                <input type="tel" id="phoneNumber">
+                            </div>
+                            <div class="form-group">
+                                <label for="jobTitle">Job Title</label>
+                                <input type="text" id="jobTitle">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="companyName">Company Name</label>
+                            <input type="text" id="companyName">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="linkedIn">LinkedIn Profile</label>
+                                <input type="url" id="linkedIn" placeholder="https://linkedin.com/in/yourprofile">
+                            </div>
+                            <div class="form-group">
+                                <label for="website">Website</label>
+                                <input type="url" id="website" placeholder="https://yourwebsite.com">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bio">Bio</label>
+                            <textarea id="bio" rows="3" placeholder="Brief description about yourself..."></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Save Profile</button>
+                            <button type="button" class="btn-secondary" id="previewProfile">Preview</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Page -->
+        <div id="sharePage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Share Profile</h1>
+                    <p>Share your business card via NFC or QR code</p>
+                </div>
+
+                <div class="share-container">
+                    <div class="share-methods">
+                        <!-- NFC Share -->
+                        <div class="share-method">
+                            <div class="method-header">
+                                <div class="method-icon">📱</div>
+                                <h2>NFC Share</h2>
+                                <p>Tap to share with nearby devices</p>
+                            </div>
+                            <div class="method-content">
+                                <div id="nfcStatus" class="nfc-status">
+                                    <div class="status-icon">❌</div>
+                                    <span>Checking NFC availability...</span>
+                                </div>
+                                <button id="nfcShareBtn" class="btn-primary" disabled>
+                                    Start NFC Share
+                                </button>
+                                <button id="nfcReadBtn" class="btn-secondary" disabled>
+                                    Read NFC Tag
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- QR Code Share -->
+                        <div class="share-method">
+                            <div class="method-header">
+                                <div class="method-icon">📊</div>
+                                <h2>QR Code</h2>
+                                <p>Scan to connect instantly</p>
+                            </div>
+                            <div class="method-content">
+                                <div id="qrCode" class="qr-code">
+                                    <div class="qr-placeholder">
+                                        <div class="qr-icon">📊</div>
+                                        <p>Click to generate QR code</p>
+                                    </div>
+                                </div>
+                                <div class="qr-actions">
+                                    <button id="generateQR" class="btn-primary">Generate QR Code</button>
+                                    <button id="scanQR" class="btn-secondary">Scan QR Code</button>
+                                    <button id="downloadQR" class="btn-secondary"
+                                        style="display: none;">Download</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Camera Scanner -->
+                    <div id="scannerModal" class="modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h2>Scan QR Code</h2>
+                                <button class="modal-close" id="closeScannerModal">&times;</button>
+                            </div>
+                            <div class="scanner-container">
+                                <video id="scannerVideo" autoplay></video>
+                                <div class="scanner-overlay">
+                                    <div class="scanner-frame"></div>
+                                </div>
+                            </div>
+                            <div class="scanner-actions">
+                                <button id="startScanner" class="btn-primary">Start Scanner</button>
+                                <button id="stopScanner" class="btn-secondary">Stop Scanner</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connections Page -->
+        <div id="connectionsPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Connections</h1>
+                    <p>Your networking history and received profiles</p>
+                </div>
+
+                <div class="connections-tabs">
+                    <button class="tab-btn active" data-tab="received">Received</button>
+                    <button class="tab-btn" data-tab="sent">Sent</button>
+                </div>
+
+                <div class="connections-content">
+                    <div id="receivedConnections" class="connections-list active">
+                        <div class="connections-grid" id="receivedConnectionsGrid">
+                            <!-- Connections will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div id="sentConnections" class="connections-list">
+                        <div class="connections-grid" id="sentConnectionsGrid">
+                            <!-- Connections will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Profile Preview Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Profile Preview</h2>
+                <button class="modal-close" id="closeProfileModal">&times;</button>
+            </div>
+            <div class="profile-preview" id="profilePreview">
+                <!-- Profile preview content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script>
+        // Firebase configuration
+        window.firebaseConfig = {
+            apiKey: "AIzaSyDgaHhBiiSSfHQFmjfvpsQbvNQ0tv8-oes",
+            authDomain: "nfcbusinesscard-81a48.firebaseapp.com",
+            projectId: "nfcbusinesscard-81a48",
+            storageBucket: "nfcbusinesscard-81a48.firebasestorage.app",
+            messagingSenderId: "53447193809",
+            appId: "1:53447193809:web:348a650f399c456b6101f0",
+            measurementId: "G-EBG3SN6XRP"
+        };
+    </script>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/nfc.js"></script>
+    <script src="js/qr.js"></script>
+    <script src="js/connections.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
