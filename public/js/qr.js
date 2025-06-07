@@ -7,6 +7,7 @@ class QRManager {
         this.qrScanner = null;
         this.stream = null;
         this.currentQRCode = null;
+        this.currentQRBlob = null;
         this.initialize();
     }
 
@@ -69,8 +70,29 @@ class QRManager {
     // Generate QR code for user profile
     async generateQRCode() {
         try {
+            // Debug logging
+            console.log('Generating QR code, userProfile:', window.userProfile);
+            
             if (!window.userProfile?.profile) {
-                utils.showToast('Please create your profile first', 'warning');
+                console.log('No profile found, attempting to reload profile data...');
+                
+                // Try to reload profile data before showing error
+                await utils.refreshUserProfile();
+                
+                // Check again after reload
+                if (!window.userProfile?.profile) {
+                    utils.showToast('Please create your profile first', 'warning');
+                    if (window.app?.navigateTo) {
+                        window.app.navigateTo('profile');
+                    }
+                    return;
+                }
+            }
+
+            // Validate profile has required fields
+            const profile = window.userProfile.profile;
+            if (!profile.fullName || !profile.email) {
+                utils.showToast('Please complete your profile with name and email', 'warning');
                 if (window.app?.navigateTo) {
                     window.app.navigateTo('profile');
                 }
@@ -79,17 +101,19 @@ class QRManager {
 
             utils.showLoading();
 
-            // Create profile data for sharing
-            const profileData = utils.createProfileData(
-                window.userProfile.profile,
-                authManager.getUserId()
-            );
+            // Generate QR code using our server-side endpoint
+            const response = await utils.apiRequest('/users/qr', {
+                method: 'POST',
+                body: JSON.stringify({
+                    size: 300,
+                    format: 'png',
+                    quality: 0.92
+                })
+            });
 
-            // Convert to JSON string
-            const dataString = JSON.stringify(profileData);
-
-            // Generate QR code using qr-server.com API (free service)
-            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(dataString)}`;
+            // Create blob URL for the QR code image
+            const qrCodeBlob = new Blob([response], { type: 'image/png' });
+            const qrCodeUrl = URL.createObjectURL(qrCodeBlob);
 
             // Create QR code image element
             const qrCodeContainer = document.getElementById('qrCode');
@@ -100,6 +124,7 @@ class QRManager {
                 
                 // Store current QR code for download
                 this.currentQRCode = qrCodeUrl;
+                this.currentQRBlob = qrCodeBlob;
                 
                 // Show download button
                 const downloadBtn = document.getElementById('downloadQR');
@@ -121,17 +146,13 @@ class QRManager {
     // Download QR code
     async downloadQRCode() {
         try {
-            if (!this.currentQRCode) {
+            if (!this.currentQRBlob) {
                 utils.showToast('No QR code to download', 'warning');
                 return;
             }
 
-            // Fetch the image
-            const response = await fetch(this.currentQRCode);
-            const blob = await response.blob();
-
-            // Create download link
-            const url = window.URL.createObjectURL(blob);
+            // Create download link using the blob directly
+            const url = window.URL.createObjectURL(this.currentQRBlob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `business-card-qr-${Date.now()}.png`;
@@ -600,17 +621,18 @@ class QRManager {
 
     // Share profile via other methods (social media, messaging apps)
     shareQRCode() {
-        if (!this.currentQRCode) {
+        if (!this.currentQRCode && !this.currentQRBlob) {
             utils.showToast('Generate QR code first', 'warning');
             return;
         }
 
-        if (navigator.share) {
-            // Use Web Share API if available
+        if (navigator.share && this.currentQRBlob) {
+            // Use Web Share API if available with file sharing
+            const file = new File([this.currentQRBlob], 'business-card-qr.png', { type: 'image/png' });
             navigator.share({
                 title: 'My Business Card',
                 text: 'Scan this QR code to get my contact information',
-                url: this.currentQRCode
+                files: [file]
             }).catch(error => {
                 console.error('Share failed:', error);
                 this.fallbackShare();
@@ -622,9 +644,13 @@ class QRManager {
 
     // Fallback share methods
     fallbackShare() {
-        // Copy QR code URL to clipboard
-        utils.copyToClipboard(this.currentQRCode);
-        utils.showToast('QR code URL copied to clipboard', 'success');
+        // Copy QR code URL to clipboard if available
+        if (this.currentQRCode) {
+            utils.copyToClipboard(this.currentQRCode);
+            utils.showToast('QR code URL copied to clipboard', 'success');
+        } else {
+            utils.showToast('Use download button to save QR code', 'info');
+        }
     }
 
     // Generate QR code with custom styling (advanced feature)
@@ -638,18 +664,27 @@ class QRManager {
             } = options;
 
             if (!window.userProfile?.profile) {
-                throw new Error('No profile data available');
+                console.log('No profile found for styled QR, attempting to reload profile data...');
+                await utils.refreshUserProfile();
+                
+                if (!window.userProfile?.profile) {
+                    throw new Error('No profile data available');
+                }
             }
 
-            const profileData = utils.createProfileData(
-                window.userProfile.profile,
-                authManager.getUserId()
-            );
+            // Generate QR code using our server-side endpoint with styling options
+            const response = await utils.apiRequest('/users/qr', {
+                method: 'POST',
+                body: JSON.stringify({
+                    size: size,
+                    format: format,
+                    quality: 0.92
+                })
+            });
 
-            const dataString = JSON.stringify(profileData);
-            
-            // Use advanced QR generation service with styling options
-            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(dataString)}&color=${color}&bgcolor=${bgcolor}&format=${format}`;
+            // Create blob URL for the styled QR code
+            const qrCodeBlob = new Blob([response], { type: `image/${format}` });
+            const qrCodeUrl = URL.createObjectURL(qrCodeBlob);
 
             return qrCodeUrl;
 
@@ -663,7 +698,7 @@ class QRManager {
     getStatus() {
         return {
             isScanning: this.isScanning,
-            hasQRCode: !!this.currentQRCode,
+            hasQRCode: !!(this.currentQRCode || this.currentQRBlob),
             cameraSupported: utils.isCameraSupported()
         };
     }

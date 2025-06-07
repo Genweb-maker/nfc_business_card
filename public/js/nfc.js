@@ -70,7 +70,25 @@ class NFCManager {
             }
 
             if (!window.userProfile?.profile) {
-                utils.showToast('Please create your profile first', 'warning');
+                console.log('No profile found for NFC sharing, attempting to reload profile data...');
+                
+                // Try to reload profile data before showing error
+                await utils.refreshUserProfile();
+                
+                // Check again after reload
+                if (!window.userProfile?.profile) {
+                    utils.showToast('Please create your profile first', 'warning');
+                    if (window.app?.navigateTo) {
+                        window.app.navigateTo('profile');
+                    }
+                    return;
+                }
+            }
+
+            // Validate profile has required fields
+            const profile = window.userProfile.profile;
+            if (!profile.fullName || !profile.email) {
+                utils.showToast('Please complete your profile with name and email', 'warning');
                 if (window.app?.navigateTo) {
                     window.app.navigateTo('profile');
                 }

@@ -18,6 +18,28 @@ function removeAuthToken() {
     localStorage.removeItem('authToken');
 }
 
+// Refresh user profile data
+async function refreshUserProfile() {
+    try {
+        console.log('Refreshing user profile data...');
+        const response = await apiRequest('/users/profile');
+        
+        if (response.success && response.user) {
+            window.userProfile = response.user;
+            console.log('User profile refreshed:', window.userProfile);
+            return response.user;
+        } else {
+            console.log('No profile found during refresh');
+            window.userProfile = null;
+            return null;
+        }
+    } catch (error) {
+        console.error('Failed to refresh user profile:', error);
+        // Don't throw error as this might be called during initialization
+        return null;
+    }
+}
+
 // API request helper
 async function apiRequest(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
@@ -41,13 +63,28 @@ async function apiRequest(endpoint, options = {}) {
     
     try {
         const response = await fetch(url, mergedOptions);
-        const data = await response.json();
         
         if (!response.ok) {
-            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            // Try to parse as JSON for error messages
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // If JSON parsing fails, use status text
+                errorMessage = response.statusText || errorMessage;
+            }
+            throw new Error(errorMessage);
         }
         
-        return data;
+        // Check if response is binary (image, etc.)
+        const contentType = response.headers.get('content-type');
+        if (contentType && (contentType.includes('image/') || contentType.includes('application/octet-stream'))) {
+            return await response.arrayBuffer();
+        }
+        
+        // Default to JSON
+        return await response.json();
     } catch (error) {
         console.error('API request failed:', error);
         throw error;
@@ -592,6 +629,7 @@ window.utils = {
     getAuthToken,
     setAuthToken,
     removeAuthToken,
+    refreshUserProfile,
     apiRequest,
     showToast,
     showLoading,

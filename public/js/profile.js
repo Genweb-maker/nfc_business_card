@@ -202,6 +202,8 @@ class ProfileManager {
             const response = await utils.apiRequest('/users/profile');
             
             if (response.success && response.user?.profile) {
+                // Update global user profile
+                window.userProfile = response.user;
                 this.currentProfile = response.user.profile;
                 this.populateForm(this.currentProfile);
                 this.isDirty = false;

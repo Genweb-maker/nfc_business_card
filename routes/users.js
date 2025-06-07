@@ -138,4 +138,82 @@ router.delete('/profile', authenticateToken, async (req, res) => {
   }
 });
 
+// Generate QR code for user profile
+router.post('/qr', authenticateToken, async (req, res) => {
+  try {
+    const QRCode = require('qrcode');
+    
+    // Get user profile
+    const user = await User.findOne({ firebaseUid: req.user.uid });
+    
+    if (!user || !user.profile) {
+      return res.status(404).json({ 
+        error: 'Profile not found', 
+        message: 'Please create your profile first' 
+      });
+    }
+
+    // Validate required fields
+    if (!user.profile.fullName || !user.profile.email) {
+      return res.status(400).json({ 
+        error: 'Incomplete profile', 
+        message: 'Profile must have name and email' 
+      });
+    }
+
+    // Create profile data for sharing
+    const profileData = {
+      type: 'nfc-business-card',
+      version: '1.0',
+      senderUid: req.user.uid,
+      profile: {
+        fullName: user.profile.fullName,
+        email: user.profile.email,
+        phoneNumber: user.profile.phoneNumber || '',
+        companyName: user.profile.companyName || '',
+        jobTitle: user.profile.jobTitle || '',
+        linkedIn: user.profile.linkedIn || '',
+        website: user.profile.website || '',
+        bio: user.profile.bio || ''
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    const dataString = JSON.stringify(profileData);
+    
+    // Generate QR code options from request
+    const { size = 300, format = 'png', quality = 0.92 } = req.body;
+    
+    const qrOptions = {
+      type: format === 'svg' ? 'svg' : 'png',
+      quality: quality,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      },
+      width: parseInt(size)
+    };
+
+    // Generate QR code
+    if (format === 'svg') {
+      const qrCodeSVG = await QRCode.toString(dataString, { ...qrOptions, type: 'svg' });
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.send(qrCodeSVG);
+    } else {
+      const qrCodeBuffer = await QRCode.toBuffer(dataString, qrOptions);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Content-Disposition', `inline; filename="business-card-qr.png"`);
+      res.send(qrCodeBuffer);
+    }
+
+  } catch (error) {
+    console.error('QR generation error:', error);
+    res.status(500).json({ 
+      error: 'Server error', 
+      message: 'Failed to generate QR code' 
+    });
+  }
+});
+
 module.exports = router; 

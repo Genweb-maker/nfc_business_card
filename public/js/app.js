@@ -172,7 +172,7 @@ class App {
                     
                 case 'share':
                     // Initialize sharing components
-                    this.initializeSharePage();
+                    await this.initializeSharePage();
                     break;
             }
         } catch (error) {
@@ -181,12 +181,20 @@ class App {
     }
 
     // Initialize share page components
-    initializeSharePage() {
+    async initializeSharePage() {
         // Check if user has a profile
         if (!window.userProfile?.profile) {
-            utils.showToast('Please create your profile first', 'warning');
-            setTimeout(() => this.navigateTo('profile'), 2000);
-            return;
+            console.log('No profile found for share page, attempting to reload profile data...');
+            
+            // Try to reload profile data before showing error
+            await utils.refreshUserProfile();
+            
+            // Check again after reload
+            if (!window.userProfile?.profile) {
+                utils.showToast('Please create your profile first', 'warning');
+                setTimeout(() => this.navigateTo('profile'), 2000);
+                return;
+            }
         }
 
         // Update NFC status
