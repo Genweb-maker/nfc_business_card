@@ -6,6 +6,7 @@ const { authenticateToken } = require('../middleware/auth');
 // Get user profile
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
+    console.log('req.user', req.user);
     const user = await User.findOne({ firebaseUid: req.user.uid });
     
     if (!user) {
@@ -31,8 +32,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
 // Create or update user profile
 router.post('/profile', authenticateToken, async (req, res) => {
   try {
-    const { profile } = req.body;
+    const  {profile}  = req.body;
     
+    console.log("@profile",profile)
     // Validate required fields
     if (!profile.fullName || !profile.email) {
       return res.status(400).json({ 
@@ -40,6 +42,7 @@ router.post('/profile', authenticateToken, async (req, res) => {
         message: 'Full name and email are required' 
       });
     }
+    console.log(req.user.uid)
     
     // Check if user exists
     let user = await User.findOne({ firebaseUid: req.user.uid });
