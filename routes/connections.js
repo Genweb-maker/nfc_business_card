@@ -8,25 +8,28 @@ const { authenticateToken } = require('../middleware/auth');
 router.post('/save', authenticateToken, async (req, res) => {
   try {
     const { 
-      senderUid, 
-      sharedProfile, 
-      shareMethod, 
-      location, 
-      deviceInfo 
+      profileData, 
+      method, 
+      timestamp 
     } = req.body;
     
+    // Extract data from the new format
+    const senderUid = profileData?.firebaseUid;
+    const sharedProfile = profileData.profile;
+    const shareMethod = method?.toUpperCase(); // Convert to uppercase for consistency
+    
     // Validate required fields
-    if (!senderUid || !sharedProfile || !shareMethod) {
+    if (!senderUid || !sharedProfile || !method) {
       return res.status(400).json({ 
         error: 'Validation error', 
-        message: 'Sender UID, shared profile, and share method are required' 
+        message: 'Profile data, method, and sender UID are required' 
       });
     }
     
     if (!['NFC', 'QR'].includes(shareMethod)) {
       return res.status(400).json({ 
         error: 'Validation error', 
-        message: 'Share method must be either NFC or QR' 
+        message: 'Method must be either nfc or qr' 
       });
     }
     
@@ -60,8 +63,10 @@ router.post('/save', authenticateToken, async (req, res) => {
       receiverUid: req.user.uid,
       sharedProfile: sharedProfile,
       shareMethod: shareMethod,
-      location: location || {},
-      deviceInfo: deviceInfo || {}
+      location: {},
+      deviceInfo: {
+        timestamp: timestamp
+      }
     });
     
     await connection.save();

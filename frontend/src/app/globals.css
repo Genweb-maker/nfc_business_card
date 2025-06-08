@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "tailwindcss";
+
+/* Custom styles for NFC Business Card */
+@layer base {
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #1f2937;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Loading Spinner */
+  .loading {
+    @apply fixed top-0 left-0 w-full h-full bg-white/90 flex flex-col justify-center items-center z-50;
+  }
+
+  .spinner {
+    @apply w-12 h-12 border-4 border-gray-200 border-t-indigo-500 rounded-full animate-spin;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply px-6 py-3 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-gray-100 text-gray-600 font-semibold rounded-lg hover:bg-gray-200 transition-all duration-200 inline-flex items-center justify-center gap-2 border border-gray-300;
+  }
+  
+  .btn-secondary:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Cards */
+  .auth-card {
+    @apply bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 w-full max-w-md border border-white/20;
+  }
+
+  .stat-card {
+    @apply bg-white/10 backdrop-blur-sm rounded-xl p-6 flex items-center gap-4 hover:bg-white/20 transition-all duration-200 hover:-translate-y-1;
+  }
+
+  .action-card {
+    @apply bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center hover:bg-white/20 transition-all duration-200 hover:-translate-y-1 cursor-pointer border-none;
+  }
+
+  .connection-card {
+    @apply bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all duration-200 hover:-translate-y-1;
+  }
+
+  .share-method {
+    @apply bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all duration-200;
+  }
+
+  /* Forms */
+  .form-group {
+    @apply mb-4;
+  }
+
+  .form-group label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors;
+  }
+
+  /* Navigation */
+  .navbar {
+    @apply bg-white/95 backdrop-blur-sm border-b border-black/10 sticky top-0 z-50;
+  }
+
+  .nav-link {
+    @apply text-gray-600 font-medium px-4 py-2 rounded-lg transition-all hover:text-indigo-500 hover:bg-indigo-50;
+  }
+
+  .nav-link.active {
+    @apply text-indigo-500 bg-indigo-50;
+  }
+
+  /* Toast */
+  .toast {
+    @apply fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform translate-y-full opacity-0 transition-all duration-300;
+  }
+
+  .toast.show {
+    @apply translate-y-0 opacity-100;
+  }
+
+  .toast.success {
+    @apply bg-green-500 text-white;
+  }
+
+  .toast.error {
+    @apply bg-red-500 text-white;
+  }
+
+  .toast.warning {
+    @apply bg-yellow-500 text-white;
+  }
+
+  .toast.info {
+    @apply bg-blue-500 text-white;
+  }
+
+  /* Modal */
+  .modal {
+    @apply fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center z-50 opacity-0 pointer-events-none transition-opacity duration-300;
+  }
+
+  .modal.active {
+    @apply opacity-100 pointer-events-auto;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto;
+  }
+
+  /* QR Code */
+  .qr-code {
+    @apply flex justify-center items-center p-4 bg-white rounded-lg min-h-[200px];
+  }
+
+  .qr-placeholder {
+    @apply text-center text-gray-500;
+  }
+
+  /* NFC Status */
+  .nfc-status {
+    @apply flex items-center gap-2 p-3 rounded-lg bg-gray-100 mb-4;
+  }
+
+  .nfc-status.available {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .nfc-status.unavailable {
+    @apply bg-red-100 text-red-800;
+  }
+
+  /* Profile Preview */
+  .profile-preview {
+    @apply p-6;
+  }
+
+  .profile-avatar {
+    @apply w-24 h-24 bg-indigo-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4;
+  }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+
+  .slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add Inter font class */
+.font-inter {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}

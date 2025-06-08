@@ -1,6 +1,7 @@
 services:
+  # Backend API Service
   - type: web
-    name: nfc-business-card
+    name: nfc-business-card-api
     env: node
     buildCommand: npm install
     startCommand: npm start
@@ -9,4 +10,23 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000 
+        value: 10000
+      # Add your environment variables here or set them in Render dashboard
+      # - key: MONGODB_URI
+      #   fromDatabase:
+      #     name: nfc-mongodb
+      #     property: connectionString
+
+  # Frontend Next.js Service
+  - type: web
+    name: nfc-business-card-frontend
+    env: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # Frontend environment variables should be set in Render dashboard
+      # NEXT_PUBLIC_API_URL should point to your backend service URL 
