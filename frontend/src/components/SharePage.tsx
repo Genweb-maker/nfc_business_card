@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import QrScanner from 'qr-scanner';
-import { getUserProfile, addConnection } from '@/lib/api';
+import { getUserProfile, addConnection } from '../lib/api';
 import { showToast } from './Toast';
 
 // Set QR Scanner worker path

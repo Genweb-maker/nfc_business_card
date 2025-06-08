@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getUserProfile, updateUserProfile, createUserProfile } from '@/lib/api';
+import { getUserProfile, updateUserProfile, createUserProfile } from '../lib/api';
 import { showToast } from './Toast';
 
 interface ProfileData {

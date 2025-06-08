@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { setAuthToken, removeAuthToken } from '@/lib/api';
+import { auth } from '../lib/firebase';
+import { setAuthToken, removeAuthToken } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
