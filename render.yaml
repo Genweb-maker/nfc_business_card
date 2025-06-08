@@ -17,16 +17,18 @@ services:
       #     name: nfc-mongodb
       #     property: connectionString
 
-  # Frontend Next.js Service
+    # Frontend Next.js Service  
   - type: web
     name: nfc-business-card-frontend
     env: node
-    buildCommand: cd frontend && npm install && npm run build
+    buildCommand: cd frontend && npm ci && npm run build
     startCommand: cd frontend && npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3000
+      - key: NEXT_TELEMETRY_DISABLED
+        value: 1
       # Frontend environment variables should be set in Render dashboard
       # NEXT_PUBLIC_API_URL should point to your backend service URL 
