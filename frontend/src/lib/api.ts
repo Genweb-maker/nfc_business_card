@@ -1,7 +1,7 @@
 // API base URL - In production, this should be your backend URL
 const API_BASE = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-url.com/api' 
-  : 'http://localhost:5000/api';
+  ? process.env.NEXT_PUBLIC_API_URL
+  : 'https://nfc-business-card-be.onrender.com/api';
 
 // Get stored auth token
 export function getAuthToken(): string | null {
