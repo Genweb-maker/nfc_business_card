@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import AuthPage from '@/components/AuthPage';
-import Dashboard from '@/components/Dashboard';
-import ProfilePage from '@/components/ProfilePage';
-import SharePage from '@/components/SharePage';
-import ConnectionsPage from '@/components/ConnectionsPage';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import Navbar from '@/components/Navbar';
-import Toast from '@/components/Toast';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import AuthPage from '../components/AuthPage';
+import Dashboard from '../components/Dashboard';
+import ProfilePage from '../components/ProfilePage';
+import SharePage from '../components/SharePage';
+import ConnectionsPage from '../components/ConnectionsPage';
+import LoadingSpinner from '../components/LoadingSpinner';
+import Navbar from '../components/Navbar';
+import Toast from '../components/Toast';
 
 type Page = 'dashboard' | 'profile' | 'share' | 'connections';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getConnectionStats } from '@/lib/api';
+import { getConnectionStats } from '../lib/api';
 import { showToast } from './Toast';
 
 interface Stats {
