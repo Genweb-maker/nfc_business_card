@@ -11,22 +11,11 @@ const connectionSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  sharedProfile: {
-    fullName: {
-      type: String,
-      required: true
-    },
-    email: {
-      type: String,
-      required: true
-    },
-    phoneNumber: String,
-    companyName: String,
-    jobTitle: String,
-    linkedIn: String,
-    website: String,
-    bio: String,
-    profilePicture: String
+  // Store reference to the User who shared their profile
+  sharedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
   shareMethod: {
     type: String,
@@ -61,7 +50,8 @@ const connectionSchema = new mongoose.Schema({
   deviceInfo: {
     userAgent: String,
     platform: String,
-    screenResolution: String
+    screenResolution: String,
+    timestamp: Date
   },
   isActive: {
     type: Boolean,
@@ -75,5 +65,6 @@ const connectionSchema = new mongoose.Schema({
 connectionSchema.index({ senderUid: 1, createdAt: -1 });
 connectionSchema.index({ receiverUid: 1, createdAt: -1 });
 connectionSchema.index({ createdAt: -1 });
+connectionSchema.index({ sharedBy: 1 });
 
 module.exports = mongoose.model('Connection', connectionSchema); 
