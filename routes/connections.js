@@ -15,14 +15,13 @@ router.post('/save', authenticateToken, async (req, res) => {
     
     // Extract data from the new format
     const senderUid = profileData?.firebaseUid;
-    const sharedProfile = profileData.profile;
     const shareMethod = method?.toUpperCase(); // Convert to uppercase for consistency
     
     // Validate required fields
-    if (!senderUid || !sharedProfile || !method) {
+    if (!senderUid || !method) {
       return res.status(400).json({ 
         error: 'Validation error', 
-        message: 'Profile data, method, and sender UID are required' 
+        message: 'Sender UID and method are required' 
       });
     }
     
@@ -34,10 +33,21 @@ router.post('/save', authenticateToken, async (req, res) => {
     }
     
     // Prevent self-connections
+    console.log("req", req.user.uid);
+    console.log("senderUid", senderUid);
     if (senderUid === req.user.uid) {
       return res.status(400).json({ 
         error: 'Validation error', 
         message: 'Cannot connect to yourself' 
+      });
+    }
+
+    // Find the sender user by firebaseUid to get their ObjectId
+    const senderUser = await User.findOne({ firebaseUid: senderUid });
+    if (!senderUser) {
+      return res.status(404).json({ 
+        error: 'User not found', 
+        message: 'Sender user not found' 
       });
     }
     
@@ -45,6 +55,7 @@ router.post('/save', authenticateToken, async (req, res) => {
     const existingConnection = await Connection.findOne({
       senderUid: senderUid,
       receiverUid: req.user.uid,
+      sharedBy: senderUser._id,
       createdAt: {
         $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Within last 24 hours
       }
@@ -61,7 +72,7 @@ router.post('/save', authenticateToken, async (req, res) => {
     const connection = new Connection({
       senderUid: senderUid,
       receiverUid: req.user.uid,
-      sharedProfile: sharedProfile,
+      sharedBy: senderUser._id, // Store ObjectId reference instead of full profile
       shareMethod: shareMethod,
       location: {},
       deviceInfo: {
@@ -70,6 +81,9 @@ router.post('/save', authenticateToken, async (req, res) => {
     });
     
     await connection.save();
+    
+    // Populate the user data for response
+    await connection.populate('sharedBy', 'profile');
     
     res.status(201).json({ 
       success: true, 
@@ -104,6 +118,7 @@ router.get('/received', authenticateToken, async (req, res) => {
       receiverUid: req.user.uid,
       isActive: true 
     })
+    .populate('sharedBy', 'profile')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
@@ -144,6 +159,7 @@ router.get('/sent', authenticateToken, async (req, res) => {
       senderUid: req.user.uid,
       isActive: true 
     })
+    .populate('sharedBy', 'profile')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
@@ -220,7 +236,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
         { senderUid: req.user.uid }
       ],
       isActive: true
-    });
+    })
+    .populate('sharedBy', 'profile');
     
     if (!connection) {
       return res.status(404).json({ 
