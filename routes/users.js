@@ -32,7 +32,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
 // Create or update user profile
 router.post('/profile', authenticateToken, async (req, res) => {
   try {
-    const  {profile}  = req.body;
+    const  profile = req.body;
     
     console.log("@profile",profile)
     // Validate required fields

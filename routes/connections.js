@@ -10,7 +10,8 @@ router.post('/save', authenticateToken, async (req, res) => {
     const { 
       profileData, 
       method, 
-      timestamp 
+      timestamp,
+      location
     } = req.body;
     
     // Extract data from the new format
@@ -74,7 +75,7 @@ router.post('/save', authenticateToken, async (req, res) => {
       receiverUid: req.user.uid,
       sharedBy: senderUser._id, // Store ObjectId reference instead of full profile
       shareMethod: shareMethod,
-      location: {},
+      location: location,
       deviceInfo: {
         timestamp: timestamp
       }
